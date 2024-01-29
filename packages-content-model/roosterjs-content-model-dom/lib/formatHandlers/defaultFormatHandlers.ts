@@ -6,10 +6,11 @@ import { boxShadowFormatHandler } from './common/boxShadowFormatHandler';
 import { datasetFormatHandler } from './common/datasetFormatHandler';
 import { directionFormatHandler } from './block/directionFormatHandler';
 import { displayFormatHandler } from './block/displayFormatHandler';
+import { entityFormatHandler } from './entity/entityFormatHandler';
 import { floatFormatHandler } from './common/floatFormatHandler';
 import { fontFamilyFormatHandler } from './segment/fontFamilyFormatHandler';
 import { fontSizeFormatHandler } from './segment/fontSizeFormatHandler';
-import { getObjectKeys } from 'roosterjs-editor-dom';
+import { getObjectKeys } from '../domUtils/getObjectKeys';
 import { htmlAlignFormatHandler } from './block/htmlAlignFormatHandler';
 import { idFormatHandler } from './common/idFormatHandler';
 import { italicFormatHandler } from './segment/italicFormatHandler';
@@ -18,7 +19,7 @@ import { lineHeightFormatHandler } from './block/lineHeightFormatHandler';
 import { linkFormatHandler } from './segment/linkFormatHandler';
 import { listItemThreadFormatHandler } from './list/listItemThreadFormatHandler';
 import { listLevelThreadFormatHandler } from './list/listLevelThreadFormatHandler';
-import { listStylePositionFormatHandler } from './list/listStylePositionFormatHandler';
+import { listStyleFormatHandler } from './list/listStyleFormatHandler';
 import { marginFormatHandler } from './block/marginFormatHandler';
 import { paddingFormatHandler } from './block/paddingFormatHandler';
 import { sizeFormatHandler } from './common/sizeFormatHandler';
@@ -29,6 +30,7 @@ import { tableSpacingFormatHandler } from './table/tableSpacingFormatHandler';
 import { textAlignFormatHandler } from './block/textAlignFormatHandler';
 import { textColorFormatHandler } from './segment/textColorFormatHandler';
 import { textColorOnTableCellFormatHandler } from './table/textColorOnTableCellFormatHandler';
+import { textIndentFormatHandler } from './block/textIndentFormatHandler';
 import { underlineFormatHandler } from './segment/underlineFormatHandler';
 import { verticalAlignFormatHandler } from './common/verticalAlignFormatHandler';
 import { whiteSpaceFormatHandler } from './block/whiteSpaceFormatHandler';
@@ -60,6 +62,7 @@ const defaultFormatHandlerMap: FormatHandlers = {
     float: floatFormatHandler,
     fontFamily: fontFamilyFormatHandler,
     fontSize: fontSizeFormatHandler,
+    entity: entityFormatHandler,
     htmlAlign: htmlAlignFormatHandler,
     id: idFormatHandler,
     italic: italicFormatHandler,
@@ -68,7 +71,7 @@ const defaultFormatHandlerMap: FormatHandlers = {
     link: linkFormatHandler,
     listItemThread: listItemThreadFormatHandler,
     listLevelThread: listLevelThreadFormatHandler,
-    listStylePosition: listStylePositionFormatHandler,
+    listStyle: listStyleFormatHandler,
     margin: marginFormatHandler,
     padding: paddingFormatHandler,
     size: sizeFormatHandler,
@@ -79,6 +82,7 @@ const defaultFormatHandlerMap: FormatHandlers = {
     textAlign: textAlignFormatHandler,
     textColor: textColorFormatHandler,
     textColorOnTableCell: textColorOnTableCellFormatHandler,
+    textIndent: textIndentFormatHandler,
     underline: underlineFormatHandler,
     verticalAlign: verticalAlignFormatHandler,
     whiteSpace: whiteSpaceFormatHandler,
@@ -101,6 +105,7 @@ const elementBasedSegmentFormats: (keyof FormatHandlerTypeMap)[] = [
 const sharedBlockFormats: (keyof FormatHandlerTypeMap)[] = [
     'direction',
     'textAlign',
+    'textIndent',
     'lineHeight',
     'whiteSpace',
 ];
@@ -118,17 +123,17 @@ export const defaultFormatKeysPerCategory: {
     [key in keyof ContentModelFormatMap]: (keyof FormatHandlerTypeMap)[];
 } = {
     block: sharedBlockFormats,
-    listItem: ['listItemThread'],
-    listItemElement: [...sharedBlockFormats, 'direction', 'textAlign', 'lineHeight', 'margin'],
-    listLevel: [
-        'listLevelThread',
+    listItemThread: ['listItemThread'],
+    listLevelThread: ['listLevelThread'],
+    listItemElement: [
+        ...sharedBlockFormats,
         'direction',
         'textAlign',
+        'lineHeight',
         'margin',
-        'padding',
-        'listStylePosition',
-        'backgroundColor',
+        'listStyle',
     ],
+    listLevel: ['direction', 'textAlign', 'margin', 'padding', 'listStyle', 'backgroundColor'],
     styleBasedSegment: [...styleBasedSegmentFormats, 'textColor', 'backgroundColor', 'lineHeight'],
     elementBasedSegment: elementBasedSegmentFormats,
     segment: [
@@ -155,6 +160,7 @@ export const defaultFormatKeysPerCategory: {
         'size',
     ],
     tableRow: ['backgroundColor'],
+    tableColumn: ['size'],
     table: [
         'id',
         'border',
@@ -164,6 +170,7 @@ export const defaultFormatKeysPerCategory: {
         'margin',
         'size',
         'tableLayout',
+        'textColor',
     ],
     tableBorder: ['borderBox', 'tableSpacing'],
     tableCellBorder: ['borderBox'],
@@ -196,6 +203,7 @@ export const defaultFormatKeysPerCategory: {
     dataset: ['dataset'],
     divider: [...sharedBlockFormats, ...sharedContainerFormats, 'display', 'size', 'htmlAlign'],
     container: [...sharedContainerFormats, 'htmlAlign', 'size', 'display'],
+    entity: ['entity'],
 };
 
 /**

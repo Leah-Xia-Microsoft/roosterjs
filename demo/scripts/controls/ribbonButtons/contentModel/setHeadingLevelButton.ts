@@ -1,4 +1,5 @@
-import { isContentModelEditor, setHeadingLevel } from 'roosterjs-content-model-editor';
+import ContentModelRibbonButton from './ContentModelRibbonButton';
+import { setHeadingLevel } from 'roosterjs-content-model-api';
 import {
     getButtons,
     HeadingButtonStringKey,
@@ -19,7 +20,7 @@ const keys: HeadingButtonStringKey[] = [
     'buttonNameHeading6',
 ];
 
-export const setHeadingLevelButton: RibbonButton<HeadingButtonStringKey> = {
+export const setHeadingLevelButton: ContentModelRibbonButton<HeadingButtonStringKey> = {
     dropDownMenu: {
         ...originalHeadingButton.dropDownMenu,
     },
@@ -29,8 +30,6 @@ export const setHeadingLevelButton: RibbonButton<HeadingButtonStringKey> = {
     onClick: (editor, key) => {
         const headingLevel = keys.indexOf(key);
 
-        if (isContentModelEditor(editor) && headingLevel >= 0) {
-            setHeadingLevel(editor, headingLevel as 0 | 1 | 2 | 3 | 4 | 5 | 6);
-        }
+        setHeadingLevel(editor, headingLevel as 0 | 1 | 2 | 3 | 4 | 5 | 6);
     },
 };

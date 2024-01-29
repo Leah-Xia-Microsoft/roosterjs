@@ -1,14 +1,16 @@
-import * as contentModelToDom from 'roosterjs-content-model-dom/lib/modelToDom/contentModelToDom';
 import * as createDomToModelContext from 'roosterjs-content-model-dom/lib/domToModel/context/createDomToModelContext';
-import * as createModelToDomContext from 'roosterjs-content-model-dom/lib/modelToDom/context/createModelToDomContext';
 import * as domToContentModel from 'roosterjs-content-model-dom/lib/domToModel/domToContentModel';
-import ContentModelEditor from '../../lib/editor/ContentModelEditor';
-import { ContentModelDocument, EditorContext } from 'roosterjs-content-model-types';
+import * as findAllEntities from 'roosterjs-content-model-core/lib/corePlugin/utils/findAllEntities';
+import { ContentModelEditor } from '../../lib/editor/ContentModelEditor';
 import { EditorPlugin, PluginEventType } from 'roosterjs-editor-types';
+import {
+    ContentModelDocument,
+    EditorContext,
+    StandaloneEditorCore,
+} from 'roosterjs-content-model-types';
 
 const editorContext: EditorContext = {
     isDarkMode: false,
-    darkColorHandler: undefined,
 };
 
 describe('ContentModelEditor', () => {
@@ -22,11 +24,17 @@ describe('ContentModelEditor', () => {
             mockedContext
         );
         spyOn(createDomToModelContext, 'createDomToModelConfig').and.returnValue(mockedConfig);
+        spyOn(findAllEntities, 'findAllEntities');
 
         const div = document.createElement('div');
-        const editor = new ContentModelEditor(div);
-
-        spyOn((editor as any).core.api, 'createEditorContext').and.returnValue(editorContext);
+        const editor = new ContentModelEditor(div, {
+            coreApiOverride: {
+                createEditorContext: jasmine
+                    .createSpy('createEditorContext')
+                    .and.returnValue(editorContext),
+                setContentModel: jasmine.createSpy('setContentModel'),
+            },
+        });
 
         const model = editor.createContentModel();
 
@@ -53,11 +61,17 @@ describe('ContentModelEditor', () => {
             mockedContext
         );
         spyOn(createDomToModelContext, 'createDomToModelConfig').and.returnValue(mockedConfig);
+        spyOn(findAllEntities, 'findAllEntities');
 
         const div = document.createElement('div');
-        const editor = new ContentModelEditor(div);
-
-        spyOn((editor as any).core.api, 'createEditorContext').and.returnValue(editorContext);
+        const editor = new ContentModelEditor(div, {
+            coreApiOverride: {
+                createEditorContext: jasmine
+                    .createSpy('createEditorContext')
+                    .and.returnValue(editorContext),
+                setContentModel: jasmine.createSpy('setContentModel'),
+            },
+        });
 
         const model = editor.createContentModel();
 
@@ -72,80 +86,6 @@ describe('ContentModelEditor', () => {
             mockedConfig,
             editorContext
         );
-    });
-
-    it('setContentModel with normal selection', () => {
-        const mockedRange = {
-            type: 'range',
-            range: document.createRange(),
-        } as any;
-        const mockedModel = 'MockedModel' as any;
-        const mockedContext = 'MockedContext' as any;
-        const mockedConfig = 'MockedConfig' as any;
-
-        spyOn(contentModelToDom, 'contentModelToDom').and.returnValue(mockedRange);
-        spyOn(createModelToDomContext, 'createModelToDomContextWithConfig').and.returnValue(
-            mockedContext
-        );
-        spyOn(createModelToDomContext, 'createModelToDomConfig').and.returnValue(mockedConfig);
-
-        const div = document.createElement('div');
-        const editor = new ContentModelEditor(div);
-
-        spyOn((editor as any).core.api, 'createEditorContext').and.returnValue(editorContext);
-
-        const selection = editor.setContentModel(mockedModel);
-
-        expect(contentModelToDom.contentModelToDom).toHaveBeenCalledTimes(1);
-        expect(contentModelToDom.contentModelToDom).toHaveBeenCalledWith(
-            document,
-            div,
-            mockedModel,
-            mockedContext,
-            undefined
-        );
-        expect(createModelToDomContext.createModelToDomContextWithConfig).toHaveBeenCalledWith(
-            mockedConfig,
-            editorContext
-        );
-        expect(selection).toBe(mockedRange);
-    });
-
-    it('setContentModel', () => {
-        const mockedRange = {
-            type: 'range',
-            range: document.createRange(),
-        } as any;
-        const mockedModel = 'MockedModel' as any;
-        const mockedContext = 'MockedContext' as any;
-        const mockedConfig = 'MockedConfig' as any;
-
-        spyOn(contentModelToDom, 'contentModelToDom').and.returnValue(mockedRange);
-        spyOn(createModelToDomContext, 'createModelToDomContextWithConfig').and.returnValue(
-            mockedContext
-        );
-        spyOn(createModelToDomContext, 'createModelToDomConfig').and.returnValue(mockedConfig);
-
-        const div = document.createElement('div');
-        const editor = new ContentModelEditor(div);
-
-        spyOn((editor as any).core.api, 'createEditorContext').and.returnValue(editorContext);
-
-        const selection = editor.setContentModel(mockedModel);
-
-        expect(contentModelToDom.contentModelToDom).toHaveBeenCalledTimes(1);
-        expect(contentModelToDom.contentModelToDom).toHaveBeenCalledWith(
-            document,
-            div,
-            mockedModel,
-            mockedContext,
-            undefined
-        );
-        expect(createModelToDomContext.createModelToDomContextWithConfig).toHaveBeenCalledWith(
-            mockedConfig,
-            editorContext
-        );
-        expect(selection).toBe(mockedRange);
     });
 
     it('createContentModel in EditorReady event', () => {
@@ -168,22 +108,30 @@ describe('ContentModelEditor', () => {
             },
         };
         const editor = new ContentModelEditor(div, {
-            plugins: [plugin],
+            legacyPlugins: [plugin],
         });
         editor.dispose();
 
         expect(model).toEqual({
             blockGroupType: 'Document',
-            blocks: [],
-            format: {
-                fontWeight: undefined,
-                italic: undefined,
-                underline: undefined,
-                fontFamily: undefined,
-                fontSize: undefined,
-                textColor: undefined,
-                backgroundColor: undefined,
-            },
+            blocks: [
+                {
+                    blockType: 'Paragraph',
+                    format: {},
+                    segments: [
+                        {
+                            segmentType: 'SelectionMarker',
+                            format: {},
+                            isSelected: true,
+                        },
+                        {
+                            segmentType: 'Br',
+                            format: {},
+                        },
+                    ],
+                    cachedElement: jasmine.anything(),
+                },
+            ],
         });
     });
 
@@ -202,23 +150,30 @@ describe('ContentModelEditor', () => {
         expect(domToContentModel.domToContentModel).not.toHaveBeenCalled();
     });
 
+    it('formatContentModel', () => {
+        const div = document.createElement('div');
+        const editor = new ContentModelEditor(div);
+        const core = (editor as any).core;
+        const formatContentModelSpy = spyOn(core.api, 'formatContentModel');
+        const callback = jasmine.createSpy('callback');
+        const options = 'Options' as any;
+
+        editor.formatContentModel(callback, options);
+
+        expect(formatContentModelSpy).toHaveBeenCalledWith(core, callback, options);
+    });
+
     it('default format', () => {
         const div = document.createElement('div');
         const editor = new ContentModelEditor(div, {
-            defaultFormat: {
-                bold: true,
+            defaultSegmentFormat: {
+                fontWeight: 'bold',
                 italic: true,
                 underline: true,
                 fontFamily: 'Arial',
                 fontSize: '10pt',
-                textColors: {
-                    lightModeColor: 'black',
-                    darkModeColor: 'white',
-                },
-                backgroundColors: {
-                    lightModeColor: 'white',
-                    darkModeColor: 'black',
-                },
+                textColor: 'black',
+                backgroundColor: 'white',
             },
         });
 
@@ -233,6 +188,21 @@ describe('ContentModelEditor', () => {
             textColor: 'black',
             backgroundColor: 'white',
         });
+    });
+
+    it('getPendingFormat', () => {
+        const div = document.createElement('div');
+        const editor = new ContentModelEditor(div);
+        const core: StandaloneEditorCore = (editor as any).core;
+        const mockedFormat = 'FORMAT' as any;
+
+        expect(editor.getPendingFormat()).toBeNull();
+
+        core.format.pendingFormat = {
+            format: mockedFormat,
+        } as any;
+
+        expect(editor.getPendingFormat()).toEqual(mockedFormat);
     });
 
     it('dispose', () => {

@@ -1,9 +1,8 @@
-import DarkColorHandlerImpl from 'roosterjs-editor-core/lib/editor/DarkColorHandlerImpl';
 import { createDomToModelContext } from '../../../lib/domToModel/context/createDomToModelContext';
 import { createModelToDomContext } from '../../../lib/modelToDom/context/createModelToDomContext';
 import { defaultHTMLStyleMap } from '../../../lib/config/defaultHTMLStyleMap';
 import { DeprecatedColors } from '../../../lib';
-import { expectHtml } from 'roosterjs-editor-dom/test/DomTestHelper';
+import { expectHtml } from '../../testUtils';
 import { textColorFormatHandler } from '../../../lib/formatHandlers/segment/textColorFormatHandler';
 import {
     DomToModelContext,
@@ -19,7 +18,6 @@ describe('textColorFormatHandler.parse', () => {
     beforeEach(() => {
         div = document.createElement('div');
         context = createDomToModelContext();
-        context.darkColorHandler = new DarkColorHandlerImpl(div, s => 'darkMock: ' + s);
         format = {};
     });
 
@@ -109,7 +107,10 @@ describe('textColorFormatHandler.apply', () => {
     beforeEach(() => {
         div = document.createElement('div');
         context = createModelToDomContext();
-        context.darkColorHandler = new DarkColorHandlerImpl(div, s => 'darkMock: ' + s);
+        context.darkColorHandler = {
+            updateKnownColor: () => {},
+            getDarkColor: (lightColor: string) => `var(--darkColor_${lightColor}, ${lightColor})`,
+        } as any;
 
         format = {};
     });
@@ -134,10 +135,7 @@ describe('textColorFormatHandler.apply', () => {
 
         textColorFormatHandler.apply(format, div, context);
 
-        const expectedResult = [
-            '<div style="--darkColor_red:darkMock: red; color: var(--darkColor_red, red);"></div>',
-            '<div style="--darkColor_red: darkMock: red; color: var(--darkColor_red, red);"></div>',
-        ];
+        const expectedResult = ['<div style="color: var(--darkColor_red, red);"></div>'];
 
         expectHtml(div.outerHTML, expectedResult);
     });

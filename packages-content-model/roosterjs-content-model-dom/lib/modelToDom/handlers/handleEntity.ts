@@ -1,7 +1,8 @@
-import { addDelimiters, commitEntity, getObjectKeys, wrap } from 'roosterjs-editor-dom';
+import { addDelimiters } from '../../domUtils/entityUtils';
 import { applyFormat } from '../utils/applyFormat';
-import { reuseCachedElement } from '../utils/reuseCachedElement';
-import type { Entity } from 'roosterjs-editor-types';
+import { getObjectKeys } from '../../domUtils/getObjectKeys';
+import { reuseCachedElement } from '../../domUtils/reuseCachedElement';
+import { wrap } from '../../domUtils/wrap';
 import type {
     ContentModelBlockHandler,
     ContentModelEntity,
@@ -19,7 +20,9 @@ export const handleEntityBlock: ContentModelBlockHandler<ContentModelEntity> = (
     context,
     refNode
 ) => {
-    const wrapper = preprocessEntity(entityModel, context);
+    const { entityFormat, wrapper } = entityModel;
+
+    applyFormat(wrapper, context.formatAppliers.entity, entityFormat, context);
 
     refNode = reuseCachedElement(parent, wrapper, refNode);
     context.onNodeCreated?.(entityModel, wrapper);
@@ -31,26 +34,27 @@ export const handleEntityBlock: ContentModelBlockHandler<ContentModelEntity> = (
  * @internal
  */
 export const handleEntitySegment: ContentModelSegmentHandler<ContentModelEntity> = (
-    _,
+    doc,
     parent,
     entityModel,
     context,
     newSegments
 ) => {
-    const wrapper = preprocessEntity(entityModel, context);
-    const { format, isReadonly } = entityModel;
+    const { entityFormat, wrapper, format } = entityModel;
 
     parent.appendChild(wrapper);
     newSegments?.push(wrapper);
 
     if (getObjectKeys(format).length > 0) {
-        const span = wrap(wrapper, 'span');
+        const span = wrap(doc, wrapper, 'span');
 
         applyFormat(span, context.formatAppliers.segment, format, context);
     }
 
-    if (context.addDelimiterForEntity && isReadonly) {
-        const [after, before] = addDelimiters(wrapper);
+    applyFormat(wrapper, context.formatAppliers.entity, entityFormat, context);
+
+    if (context.addDelimiterForEntity && entityFormat.isReadonly) {
+        const [after, before] = addDelimiterForEntity(doc, wrapper, context);
 
         newSegments?.push(after, before);
         context.regularSelection.current.segment = after;
@@ -61,22 +65,16 @@ export const handleEntitySegment: ContentModelSegmentHandler<ContentModelEntity>
     context.onNodeCreated?.(entityModel, wrapper);
 };
 
-function preprocessEntity(entityModel: ContentModelEntity, context: ModelToDomContext) {
-    let { id, type, isReadonly, wrapper } = entityModel;
+function addDelimiterForEntity(doc: Document, wrapper: HTMLElement, context: ModelToDomContext) {
+    const [after, before] = addDelimiters(doc, wrapper);
 
-    const entity: Entity | null =
-        id && type
-            ? {
-                  wrapper,
-                  id,
-                  type,
-                  isReadonly: !!isReadonly,
-              }
-            : null;
+    const format = {
+        ...context.pendingFormat?.format,
+        ...context.defaultFormat,
+    };
 
-    if (entity) {
-        // Commit the entity attributes in case there is any change
-        commitEntity(wrapper, entity.type, entity.isReadonly, entity.id);
-    }
-    return wrapper;
+    applyFormat(after, context.formatAppliers.segment, format, context);
+    applyFormat(before, context.formatAppliers.segment, format, context);
+
+    return [after, before];
 }

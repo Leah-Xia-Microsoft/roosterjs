@@ -6,10 +6,26 @@ import type { ContentModelBlockGroup, DomToModelContext } from 'roosterjs-conten
 /**
  * @internal
  */
-export function addSelectionMarker(group: ContentModelBlockGroup, context: DomToModelContext) {
-    const marker = createSelectionMarker(context.segmentFormat);
+export function addSelectionMarker(
+    group: ContentModelBlockGroup,
+    context: DomToModelContext,
+    container?: Node,
+    offset?: number
+) {
+    const pendingFormat =
+        context.pendingFormat &&
+        context.pendingFormat.posContainer === container &&
+        context.pendingFormat.posOffset === offset
+            ? context.pendingFormat.format
+            : undefined;
+    const segmentFormat = {
+        ...context.defaultFormat,
+        ...context.segmentFormat,
+        ...pendingFormat,
+    };
+    const marker = createSelectionMarker(segmentFormat);
 
     addDecorators(marker, context);
 
-    addSegment(group, marker, context.blockFormat);
+    addSegment(group, marker, context.blockFormat, segmentFormat);
 }

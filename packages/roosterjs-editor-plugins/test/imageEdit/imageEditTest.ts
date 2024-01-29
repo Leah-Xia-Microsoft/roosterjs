@@ -1,3 +1,4 @@
+import * as applyChange from '../../lib/plugins/ImageEdit/editInfoUtils/applyChange';
 import * as TestHelper from '../TestHelper';
 import ImageEditInfo from '../../lib/plugins/ImageEdit/types/ImageEditInfo';
 import { ImageEdit } from '../../lib/ImageEdit';
@@ -18,7 +19,9 @@ describe('ImageEdit | rotate and flip', () => {
     const TEST_ID = 'imageEditTest';
     let plugin: ImageEdit;
     beforeEach(() => {
-        plugin = new ImageEdit();
+        plugin = new ImageEdit({
+            applyChangesOnMouseUp: true,
+        });
         editor = TestHelper.initEditor(TEST_ID, [plugin]);
     });
 
@@ -362,6 +365,20 @@ describe('ImageEdit | wrapper', () => {
         expect(imageShadow?.style.maxWidth).toBe('');
     });
 
+    it('image selection, remove max-height', () => {
+        const IMG_ID = 'IMAGE_ID_SELECTION';
+        const content = `<img id="${IMG_ID}" src='test'/>`;
+        editor.setContent(content);
+        const image = document.getElementById(IMG_ID) as HTMLImageElement;
+        image.style.maxHeight = '100%';
+        editor.focus();
+        editor.select(image);
+        const imageParent = image.parentElement;
+        const shadowRoot = imageParent?.shadowRoot;
+        const imageShadow = shadowRoot?.querySelector('img');
+        expect(imageShadow?.style.maxHeight).toBe('');
+    });
+
     it('image selection, cloned image should use style width/height attributes', () => {
         const IMG_ID = 'IMAGE_ID_SELECTION_2';
         const content = `<img id="${IMG_ID}" style="width: 300px; height: 300px" src='test'/>`;
@@ -374,5 +391,51 @@ describe('ImageEdit | wrapper', () => {
         const imageShadow = shadowRoot?.querySelector('img');
         expect(imageShadow?.style.height).toBe('300px');
         expect(imageShadow?.style.width).toBe('300px');
+    });
+});
+
+describe('ImageEdit | applyChangesOnMouseUp', () => {
+    let editor: IEditor;
+    const TEST_ID = 'imageEditTest';
+    let plugin: ImageEdit;
+    beforeEach(() => {
+        plugin = new ImageEdit({
+            applyChangesOnMouseUp: true,
+        });
+        editor = TestHelper.initEditor(TEST_ID, [plugin]);
+    });
+
+    afterEach(() => {
+        let element = document.getElementById(TEST_ID);
+        if (element) {
+            element.parentElement.removeChild(element);
+        }
+        editor.dispose();
+    });
+
+    const mouseUp = (target: HTMLElement, keyNumber: number) => {
+        const event = new MouseEvent('mouseup', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            shiftKey: false,
+            button: keyNumber,
+        });
+        target.dispatchEvent(event);
+    };
+
+    it('should call apply changed', () => {
+        const IMG_ID = 'IMAGE_ID_MOUSE';
+        const wrapperId = 'WRAPPER_ID';
+        const content = `<span id="${wrapperId}"></span><img id="${IMG_ID}" src='test'/>`;
+        editor.setContent(content);
+        const applyChangeSpy = spyOn(applyChange, 'default');
+        const image = document.getElementById(IMG_ID) as HTMLImageElement;
+        const wrapper = document.getElementById(wrapperId) as HTMLImageElement;
+        editor.focus();
+        editor.select(image);
+        plugin.insertImageWrapper(wrapper);
+        mouseUp(wrapper!, 2);
+        expect(applyChangeSpy).toHaveBeenCalled();
     });
 });

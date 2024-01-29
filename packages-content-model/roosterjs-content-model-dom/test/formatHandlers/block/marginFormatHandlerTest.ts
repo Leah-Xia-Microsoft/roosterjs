@@ -49,6 +49,28 @@ describe('marginFormatHandler.parse', () => {
             marginLeft: '50px',
         });
     });
+
+    it('Merge margin values', () => {
+        div.style.marginTop = '15pt';
+        format.marginTop = '30px';
+        marginFormatHandler.parse(format, div, context, {});
+        expect(format).toEqual({
+            marginTop: '15pt',
+        });
+    });
+
+    it('Do not overlay margin values with margin block values', () => {
+        div.style.margin = '1px 2px 3px 4px';
+        div.style.marginBlockEnd = '5px';
+        div.style.marginBlockStart = '6px';
+        marginFormatHandler.parse(format, div, context, {});
+        expect(format).toEqual({
+            marginTop: '1px',
+            marginRight: '2px',
+            marginBottom: '3px',
+            marginLeft: '4px',
+        });
+    });
 });
 
 describe('marginFormatHandler.apply', () => {

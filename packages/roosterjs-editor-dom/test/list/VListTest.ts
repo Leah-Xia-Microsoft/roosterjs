@@ -1285,6 +1285,14 @@ describe('VList.split', () => {
             9
         );
     });
+
+    it('split List 4 with margin-top and bottom', () => {
+        runTest(
+            `<ol id=${listId} style="margin-block:0px"><li id='${separatorElementId}'>1</li><ol style="margin-top: 0px;margin-bottom: 0px;list-style-type: lower-alpha;"><li>1</li><li>2</li><li>3</li></ol><li>3</li><li>4</li></ol>`,
+            '<ol id="listId" style="margin-block:0px" start="9"><li id="separatorId">1</li><ol style="list-style-type: lower-alpha;"><li>1</li><li>2</li><li>3</li></ol><li>3</li><li>4</li></ol>',
+            9
+        );
+    });
 });
 
 describe('VList.setListStyleType', () => {
@@ -1512,5 +1520,50 @@ describe('VList.setListStyleType', () => {
             undefined,
             { orderedStyleType: 19, unorderedStyleType: 1 }
         );
+    });
+});
+
+describe('VList.removeMargins', () => {
+    const testId = 'VList_changeListType';
+    const ListRoot = 'listRoot';
+
+    afterEach(() => {
+        DomTestHelper.removeElement(testId);
+    });
+
+    function runTest(source: string, expectedMarginTop: string, expectedMarginBottom: string) {
+        DomTestHelper.createElementFromContent(testId, source);
+        const list = document.getElementById(ListRoot) as HTMLOListElement;
+
+        if (!list) {
+            throw new Error('No root node');
+        }
+        const vList = new VList(list);
+
+        // Act
+        vList.removeMargins();
+
+        expect(list.style.marginTop).toBe(expectedMarginTop);
+        expect(list.style.marginBottom).toBe(expectedMarginBottom);
+
+        DomTestHelper.removeElement(testId);
+    }
+
+    it('remove list margins OL list', () => {
+        const list = `<ol id="${ListRoot}"></ol>`;
+
+        runTest(list, '0px', '0px');
+    });
+
+    it('remove list margins UL list', () => {
+        const list = `<ul id="${ListRoot}"></ul>`;
+
+        runTest(list, '0px', '0px');
+    });
+
+    it('do not remove list margins UL list', () => {
+        const list = `<ul style="margin-top:1px" id="${ListRoot}"><li>test</li></ul>`;
+
+        runTest(list, '1px', '');
     });
 });

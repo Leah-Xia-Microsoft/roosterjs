@@ -1,6 +1,7 @@
-import { getComputedStyle } from 'roosterjs-editor-dom';
-
 const MarginValueRegex = /(-?\d+(\.\d+)?)([a-z]+|%)/;
+
+// According to https://developer.mozilla.org/en-US/docs/Glossary/CSS_pixel, 1in = 96px
+const PixelPerInch = 96;
 
 /**
  * Parse unit value with its unit
@@ -28,6 +29,7 @@ export function parseValueWithUnit(
                 result = ptToPx(num);
                 break;
             case 'em':
+            case 'rem':
                 result = getFontSize(currentSizePxOrElement) * num;
                 break;
             case 'ex':
@@ -35,6 +37,9 @@ export function parseValueWithUnit(
                 break;
             case '%':
                 result = (getFontSize(currentSizePxOrElement) * num) / 100;
+                break;
+            case 'in':
+                result = num * PixelPerInch;
                 break;
             default:
                 // TODO: Support more unit if need
@@ -55,7 +60,9 @@ function getFontSize(currentSizeOrElement?: number | HTMLElement): number {
     } else if (typeof currentSizeOrElement === 'number') {
         return currentSizeOrElement;
     } else {
-        const styleInPt = getComputedStyle(currentSizeOrElement, 'font-size');
+        const styleInPt =
+            currentSizeOrElement.ownerDocument.defaultView?.getComputedStyle(currentSizeOrElement)
+                .fontSize ?? '';
         const floatInPt = parseFloat(styleInPt);
         const floatInPx = ptToPx(floatInPt);
 

@@ -2,13 +2,17 @@ import { addBlock } from '../../modelApi/common/addBlock';
 import { createTable } from '../../modelApi/creators/createTable';
 import { createTableCell } from '../../modelApi/creators/createTableCell';
 import { getBoundingClientRect } from '../utils/getBoundingClientRect';
+import { isElementOfType } from '../../domUtils/isElementOfType';
+import { isNodeOfType } from '../../domUtils/isNodeOfType';
 import { parseFormat } from '../utils/parseFormat';
-import { safeInstanceOf } from 'roosterjs-editor-dom';
+import { parseValueWithUnit } from '../../formatHandlers/utils/parseValueWithUnit';
 import { stackFormat } from '../utils/stackFormat';
 import type {
     ContentModelTableCellFormat,
     DatasetFormat,
+    DomToModelContext,
     ElementProcessor,
+    SizeFormat,
 } from 'roosterjs-content-model-types';
 
 /**
@@ -61,7 +65,8 @@ export const tableProcessor: ElementProcessor<HTMLTableElement> = (
             parseFormat(tableElement, context.formatParsers.dataset, table.dataset, context);
             addBlock(group, table);
 
-            const columnPositions: number[] = [0];
+            const columnPositions: (number | undefined)[] = [0];
+            const hasColGroup = processColGroup(tableElement, context, columnPositions);
             const rowPositions: number[] = [0];
             const zoomScale = context.zoomScale || 1;
 
@@ -71,7 +76,12 @@ export const tableProcessor: ElementProcessor<HTMLTableElement> = (
 
                 const tbody = tr.parentNode;
 
-                if (safeInstanceOf(tbody, 'HTMLTableSectionElement')) {
+                if (
+                    isNodeOfType(tbody, 'ELEMENT_NODE') &&
+                    (isElementOfType(tbody, 'tbody') ||
+                        isElementOfType(tbody, 'thead') ||
+                        isElementOfType(tbody, 'tfoot'))
+                ) {
                     parseFormat(tbody, context.formatParsers.tableRow, tableRow.format, context);
                 } else if (context.allowCacheElement) {
                     tableRow.cachedElement = tr;
@@ -129,8 +139,10 @@ export const tableProcessor: ElementProcessor<HTMLTableElement> = (
 
                             if (rect.width > 0 || rect.height > 0) {
                                 if (needCalcWidth) {
+                                    const pos = columnPositions[targetCol];
+
                                     columnPositions[colEnd] =
-                                        columnPositions[targetCol] + rect.width / zoomScale;
+                                        (typeof pos == 'number' ? pos : 0) + rect.width / zoomScale;
                                 }
 
                                 if (needCalcHeight) {
@@ -199,7 +211,9 @@ export const tableProcessor: ElementProcessor<HTMLTableElement> = (
                                         }
 
                                         if (hasTd) {
-                                            if (context.allowCacheElement) {
+                                            // When there is COLGROUP, width on table cell should be ignored, so we should not cache the table cell,
+                                            // and always recreate it when write back using the table formats
+                                            if (context.allowCacheElement && !hasColGroup) {
                                                 cell.cachedElement = td;
                                             }
 
@@ -261,18 +275,68 @@ export const tableProcessor: ElementProcessor<HTMLTableElement> = (
     );
 };
 
-function calcSizes(positions: number[]): number[] {
-    let result: number[] = [];
-    let lastPos = positions[positions.length - 1];
+function calcSizes(positions: (number | undefined)[]): number[] {
+    const result: number[] = [];
+    let lastPos = 0;
+
+    for (let i = positions.length - 1; i >= 0; i--) {
+        const pos = positions[i];
+
+        if (typeof pos == 'number') {
+            lastPos = pos;
+            break;
+        }
+    }
 
     for (let i = positions.length - 2; i >= 0; i--) {
-        if (positions[i] === undefined) {
+        const pos = positions[i];
+        if (pos === undefined) {
             result[i] = 0;
         } else {
-            result[i] = lastPos - positions[i];
-            lastPos = positions[i];
+            result[i] = lastPos - pos;
+            lastPos = pos;
         }
     }
 
     return result;
+}
+
+function processColGroup(
+    table: HTMLElement,
+    context: DomToModelContext,
+    result: (number | undefined)[]
+): boolean {
+    let lastPos = 0;
+    let hasColGroup = false;
+
+    for (let child = table.firstChild; child; child = child.nextSibling) {
+        if (isNodeOfType(child, 'ELEMENT_NODE') && child.tagName == 'COLGROUP') {
+            hasColGroup = true;
+
+            for (let col = child.firstChild; col; col = col.nextSibling) {
+                if (isNodeOfType(col, 'ELEMENT_NODE') && col.tagName == 'COL') {
+                    const colFormat: SizeFormat = {};
+
+                    parseFormat(col, context.formatParsers.tableColumn, colFormat, context);
+
+                    for (let i = 0; i < parseInt(col.getAttribute('span') ?? '1'); i++) {
+                        if (colFormat.width === undefined) {
+                            result.push(undefined);
+                        } else {
+                            const width = parseValueWithUnit(
+                                colFormat.width ?? '',
+                                undefined /*element*/,
+                                'px'
+                            );
+
+                            result.push(width + lastPos);
+                            lastPos += width;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return hasColGroup;
 }

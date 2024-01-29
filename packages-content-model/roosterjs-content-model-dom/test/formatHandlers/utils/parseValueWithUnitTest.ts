@@ -1,23 +1,29 @@
-import * as getComputedStyles from 'roosterjs-editor-dom/lib/utils/getComputedStyles';
 import { parseValueWithUnit } from '../../../lib/formatHandlers/utils/parseValueWithUnit';
 
 describe('parseValueWithUnit with element', () => {
     function runTest(unit: string, results: number[]) {
-        const mockedElement = {
+        const mockedElement = ({
+            ownerDocument: {
+                defaultView: {
+                    getComputedStyle: () => ({
+                        fontSize: '15pt',
+                    }),
+                },
+            },
             offsetWidth: 1000,
-        } as HTMLElement;
+        } as any) as HTMLElement;
 
         ['0', '1', '1.1', '-1.1'].forEach((value, i) => {
             const input = value + unit;
             const result = parseValueWithUnit(input, mockedElement);
 
-            expect(result).toBe(results[i], input);
+            if (Number.isNaN(results[i])) {
+                expect(result).toBeNaN();
+            } else {
+                expect(Math.abs(result - results[i])).toBeLessThan(1e-3, input);
+            }
         });
     }
-
-    beforeEach(() => {
-        spyOn(getComputedStyles, 'getComputedStyle').and.returnValue('15pt');
-    });
 
     it('empty', () => {
         expect(parseValueWithUnit()).toBe(0);
@@ -39,6 +45,10 @@ describe('parseValueWithUnit with element', () => {
 
     it('ex', () => {
         runTest('ex', [0, 10, 11, -11]);
+    });
+
+    it('rem', () => {
+        runTest('rem', [0, 20, 22, -22]);
     });
 
     it('no unit', () => {
@@ -63,6 +73,10 @@ describe('parseValueWithUnit with element', () => {
         const result = parseValueWithUnit('16pt', undefined, 'pt');
 
         expect(result).toBe(16);
+    });
+
+    it('in to px', () => {
+        runTest('in', [0, 96, 105.6, -105.6]);
     });
 });
 
@@ -72,7 +86,11 @@ describe('parseValueWithUnit with number', () => {
             const input = value + unit;
             const result = parseValueWithUnit(input, 20);
 
-            expect(result).toBe(results[i], input);
+            if (Number.isNaN(results[i])) {
+                expect(result).toBeNaN();
+            } else {
+                expect(Math.abs(result - results[i])).toBeLessThan(1e-3, input);
+            }
         });
     }
 
@@ -120,5 +138,9 @@ describe('parseValueWithUnit with number', () => {
         const result = parseValueWithUnit('16pt', undefined, 'pt');
 
         expect(result).toBe(16);
+    });
+
+    it('in to px', () => {
+        runTest('in', [0, 96, 105.6, -105.6]);
     });
 });

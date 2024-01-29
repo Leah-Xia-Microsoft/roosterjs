@@ -6,6 +6,7 @@ import type { BoxShadowFormat } from './formatParts/BoxShadowFormat';
 import type { DatasetFormat } from './metadata/DatasetFormat';
 import type { DirectionFormat } from './formatParts/DirectionFormat';
 import type { DisplayFormat } from './formatParts/DisplayFormat';
+import type { EntityInfoFormat } from './formatParts/EntityInfoFormat';
 import type { FloatFormat } from './formatParts/FloatFormat';
 import type { FontFamilyFormat } from './formatParts/FontFamilyFormat';
 import type { FontSizeFormat } from './formatParts/FontSizeFormat';
@@ -15,7 +16,7 @@ import type { ItalicFormat } from './formatParts/ItalicFormat';
 import type { LetterSpacingFormat } from './formatParts/LetterSpacingFormat';
 import type { LineHeightFormat } from './formatParts/LineHeightFormat';
 import type { LinkFormat } from './formatParts/LinkFormat';
-import type { ListStylePositionFormat } from './formatParts/ListStylePositionFormat';
+import type { ListStyleFormat } from './formatParts/ListStyleFormat';
 import type { ListThreadFormat } from './formatParts/ListThreadFormat';
 import type { MarginFormat } from './formatParts/MarginFormat';
 import type { PaddingFormat } from './formatParts/PaddingFormat';
@@ -26,6 +27,7 @@ import type { SuperOrSubScriptFormat } from './formatParts/SuperOrSubScriptForma
 import type { TableLayoutFormat } from './formatParts/TableLayoutFormat';
 import type { TextAlignFormat } from './formatParts/TextAlignFormat';
 import type { TextColorFormat } from './formatParts/TextColorFormat';
+import type { TextIndentFormat } from './formatParts/TextIndentFormat';
 import type { UnderlineFormat } from './formatParts/UnderlineFormat';
 import type { VerticalAlignFormat } from './formatParts/VerticalAlignFormat';
 import type { WhiteSpaceFormat } from './formatParts/WhiteSpaceFormat';
@@ -74,6 +76,11 @@ export interface FormatHandlerTypeMap {
      * Format for DisplayFormat
      */
     display: DisplayFormat;
+
+    /**
+     * Format for EntityInfoFormat and IdFormat
+     */
+    entity: EntityInfoFormat & IdFormat;
 
     /**
      * Format for FloatFormat
@@ -131,9 +138,9 @@ export interface FormatHandlerTypeMap {
     listLevelThread: ListThreadFormat;
 
     /**
-     * Format for ListStylePositionFormat (used by list level)
+     * Format for ListStyleFormat
      */
-    listStylePosition: ListStylePositionFormat;
+    listStyle: ListStyleFormat;
 
     /**
      * Format for MarginFormat
@@ -184,6 +191,11 @@ export interface FormatHandlerTypeMap {
      * Format for TextColorFormat, for Table Cell only
      */
     textColorOnTableCell: TextColorFormat;
+
+    /**
+     * Format for TextIndentFormat
+     */
+    textIndent: TextIndentFormat;
 
     /**
      * Format for UnderlineFormat

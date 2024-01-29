@@ -11,10 +11,24 @@ export { tableProcessor } from './domToModel/processors/tableProcessor';
 export { getRegularSelectionOffsets } from './domToModel/utils/getRegularSelectionOffsets';
 export { parseFormat } from './domToModel/utils/parseFormat';
 export { areSameFormats } from './domToModel/utils/areSameFormats';
+export { isBlockElement } from './domToModel/utils/isBlockElement';
 
 export { updateMetadata, hasMetadata } from './domUtils/metadata/updateMetadata';
-export { updateListMetadata } from './domUtils/metadata/updateListMetadata';
 export { isNodeOfType, NodeTypeMap } from './domUtils/isNodeOfType';
+export { isElementOfType } from './domUtils/isElementOfType';
+export { getObjectKeys } from './domUtils/getObjectKeys';
+export { default as toArray } from './domUtils/toArray';
+export { moveChildNodes, wrapAllChildNodes } from './domUtils/moveChildNodes';
+export { wrap } from './domUtils/wrap';
+export {
+    isEntityElement,
+    getAllEntityWrappers,
+    parseEntityClassName,
+    generateEntityClassNames,
+    addDelimiters,
+} from './domUtils/entityUtils';
+export { reuseCachedElement } from './domUtils/reuseCachedElement';
+export { isWhiteSpacePreserved } from './domUtils/isWhiteSpacePreserved';
 
 export { createBr } from './modelApi/creators/createBr';
 export { createListItem } from './modelApi/creators/createListItem';
@@ -32,25 +46,24 @@ export { createGeneralBlock } from './modelApi/creators/createGeneralBlock';
 export { createEntity } from './modelApi/creators/createEntity';
 export { createDivider } from './modelApi/creators/createDivider';
 export { createListLevel } from './modelApi/creators/createListLevel';
+export { createEmptyModel } from './modelApi/creators/createEmptyModel';
 
 export { addBlock } from './modelApi/common/addBlock';
 export { addCode } from './modelApi/common/addDecorators';
 export { addLink } from './modelApi/common/addDecorators';
-export { ensureParagraph } from './modelApi/common/ensureParagraph';
 
 export { normalizeContentModel } from './modelApi/common/normalizeContentModel';
 export { isGeneralSegment } from './modelApi/common/isGeneralSegment';
 export { unwrapBlock } from './modelApi/common/unwrapBlock';
 export { addSegment } from './modelApi/common/addSegment';
-export { isWhiteSpacePreserved } from './modelApi/common/isWhiteSpacePreserved';
+export { isEmpty } from './modelApi/common/isEmpty';
 export { normalizeSingleSegment } from './modelApi/common/normalizeSegment';
-export { applySegmentFormatToElement } from './modelApi/common/applySegmentFormatToElement';
 
 export { setParagraphNotImplicit } from './modelApi/block/setParagraphNotImplicit';
 
 export { parseValueWithUnit } from './formatHandlers/utils/parseValueWithUnit';
 export { BorderKeys } from './formatHandlers/common/borderFormatHandler';
-export { DeprecatedColors } from './formatHandlers/utils/color';
+export { DeprecatedColors, getColor, setColor, parseColor } from './formatHandlers/utils/color';
 
 export {
     createDomToModelContext,

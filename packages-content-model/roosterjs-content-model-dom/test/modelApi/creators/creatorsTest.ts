@@ -20,6 +20,7 @@ import {
     ContentModelListLevel,
     ContentModelSegmentFormat,
     ContentModelTableCellFormat,
+    DatasetFormat,
 } from 'roosterjs-content-model-types';
 
 describe('Creators', () => {
@@ -328,6 +329,48 @@ describe('Creators', () => {
         });
     });
 
+    it('createTableCell with dataset', () => {
+        const obj = { bgColorOverride: true, vAlignOverride: true, borderOverride: true };
+        const dataset: DatasetFormat = {
+            'data-editing-info': JSON.stringify(obj),
+        };
+        const unchangedDataset = { ...dataset };
+        const tdModel = createTableCell(
+            1 /*colSpan*/,
+            1 /*rowSpan*/,
+            false /*isHeader*/,
+            undefined /*format*/,
+            dataset
+        );
+
+        expect(tdModel).toEqual({
+            blockGroupType: 'TableCell',
+            blocks: [],
+            spanLeft: false,
+            spanAbove: false,
+            isHeader: false,
+            format: {},
+            dataset: unchangedDataset,
+        });
+
+        // Change original dataset object should not impact the created table cell
+        dataset['data-editing-info'] = JSON.stringify({
+            bgColorOverride: false,
+            vAlignOverride: false,
+            borderOverride: false,
+        });
+
+        expect(tdModel).toEqual({
+            blockGroupType: 'TableCell',
+            blocks: [],
+            spanLeft: false,
+            spanAbove: false,
+            isHeader: false,
+            format: {},
+            dataset: unchangedDataset,
+        });
+    });
+
     it('createSelectionMarker', () => {
         const marker = createSelectionMarker();
 
@@ -472,34 +515,36 @@ describe('Creators', () => {
 
     it('createEntity', () => {
         const id = 'entity_1';
-        const type = 'entity';
+        const entityType = 'entity';
         const isReadonly = true;
         const wrapper = document.createElement('div');
-        const entityModel = createEntity(wrapper, isReadonly, type, undefined, id);
+        const entityModel = createEntity(wrapper, isReadonly, undefined, entityType, id);
 
         expect(entityModel).toEqual({
             blockType: 'Entity',
             segmentType: 'Entity',
             format: {},
-            id,
-            type,
-            isReadonly,
+            entityFormat: {
+                id,
+                entityType,
+                isReadonly,
+            },
             wrapper,
         });
     });
 
     it('createEntity with format', () => {
         const id = 'entity_1';
-        const type = 'entity';
+        const entityType = 'entity';
         const isReadonly = true;
         const wrapper = document.createElement('div');
         const entityModel = createEntity(
             wrapper,
             isReadonly,
-            type,
             {
                 fontSize: '10pt',
             },
+            entityType,
             id
         );
 
@@ -507,9 +552,11 @@ describe('Creators', () => {
             blockType: 'Entity',
             segmentType: 'Entity',
             format: { fontSize: '10pt' },
-            id,
-            type,
-            isReadonly,
+            entityFormat: {
+                id,
+                entityType,
+                isReadonly,
+            },
             wrapper,
         });
     });

@@ -1,105 +1,141 @@
-import type { ContentModelPluginState } from './pluginState/ContentModelPluginState';
-import type { CoreApiMap, EditorCore } from 'roosterjs-editor-types';
+import type { ContentModelCorePluginState } from './ContentModelCorePlugins';
+import type { StandaloneEditorCore } from 'roosterjs-content-model-types';
 import type {
-    ContentModelDocument,
-    DOMSelection,
-    DomToModelOption,
-    DomToModelSettings,
-    EditorContext,
-    ModelToDomOption,
-    ModelToDomSettings,
-    OnNodeCreated,
-} from 'roosterjs-content-model-types';
+    CustomData,
+    ExperimentalFeatures,
+    ContentMetadata,
+    GetContentMode,
+    InsertOption,
+    NodePosition,
+    StyleBasedFormatState,
+    SizeTransformer,
+    DarkColorHandler,
+} from 'roosterjs-editor-types';
 
 /**
- * Create a EditorContext object used by ContentModel API
+ * Set HTML content to this editor. All existing content will be replaced. A ContentChanged event will be triggered
+ * if triggerContentChangedEvent is set to true
  * @param core The ContentModelEditorCore object
+ * @param innerCore The StandaloneEditorCore object
+ * @param content HTML content to set in
+ * @param triggerContentChangedEvent True to trigger a ContentChanged event. Default value is true
  */
-export type CreateEditorContext = (core: ContentModelEditorCore) => EditorContext;
-
-/**
- * Create Content Model from DOM tree in this editor
- * @param core The ContentModelEditorCore object
- * @param option The option to customize the behavior of DOM to Content Model conversion
- * @param selectionOverride When passed, use this selection range instead of current selection in editor
- */
-export type CreateContentModel = (
+export type SetContent = (
     core: ContentModelEditorCore,
-    option?: DomToModelOption,
-    selectionOverride?: DOMSelection
-) => ContentModelDocument;
+    innerCore: StandaloneEditorCore,
+    content: string,
+    triggerContentChangedEvent: boolean,
+    metadata?: ContentMetadata
+) => void;
 
 /**
- * Get current DOM selection from editor
+ * Get current editor content as HTML string
  * @param core The ContentModelEditorCore object
+ * @param innerCore The StandaloneEditorCore object
+ * @param mode specify what kind of HTML content to retrieve
+ * @returns HTML string representing current editor content
  */
-export type GetDOMSelection = (core: ContentModelEditorCore) => DOMSelection | null;
-
-/**
- * Set content with content model. This is the replacement of core API getSelectionRangeEx
- * @param core The ContentModelEditorCore object
- * @param model The content model to set
- * @param option Additional options to customize the behavior of Content Model to DOM conversion
- * @param onNodeCreated An optional callback that will be called when a DOM node is created
- */
-export type SetContentModel = (
+export type GetContent = (
     core: ContentModelEditorCore,
-    model: ContentModelDocument,
-    option?: ModelToDomOption,
-    onNodeCreated?: OnNodeCreated
-) => DOMSelection | null;
+    innerCore: StandaloneEditorCore,
+    mode: GetContentMode
+) => string;
 
 /**
- * Set current DOM selection from editor. This is the replacement of core API select
- * @param core The ContentModelEditorCore object
- * @param selection The selection to set
+ * Insert a DOM node into editor content
+ * @param core The ContentModelEditorCore object. No op if null.
+ * @param innerCore The StandaloneEditorCore object
+ * @param option An insert option object to specify how to insert the node
  */
-export type SetDOMSelection = (core: ContentModelEditorCore, selection: DOMSelection) => void;
+export type InsertNode = (
+    core: ContentModelEditorCore,
+    innerCore: StandaloneEditorCore,
+    node: Node,
+    option: InsertOption | null
+) => boolean;
 
 /**
- * The interface for the map of core API for Content Model editor.
- * Editor can call call API from this map under ContentModelEditorCore object
+ * Get style based format state from current selection, including font name/size and colors
+ * @param core The ContentModelEditorCore objects
+ * @param innerCore The StandaloneEditorCore object
+ * @param node The node to get style from
  */
-export interface ContentModelCoreApiMap extends CoreApiMap {
+export type GetStyleBasedFormatState = (
+    core: ContentModelEditorCore,
+    innerCore: StandaloneEditorCore,
+    node: Node | null
+) => StyleBasedFormatState;
+
+/**
+ * Ensure user will type into a container element rather than into the editor content DIV directly
+ * @param core The ContentModelEditorCore object.
+ * @param innerCore The StandaloneEditorCore object
+ * @param position The position that user is about to type to
+ * @param keyboardEvent Optional keyboard event object
+ * @param deprecated Deprecated parameter, not used
+ */
+export type EnsureTypeInContainer = (
+    core: ContentModelEditorCore,
+    innerCore: StandaloneEditorCore,
+    position: NodePosition,
+    keyboardEvent?: KeyboardEvent,
+    deprecated?: boolean
+) => void;
+
+/**
+ * Core API map for Content Model editor
+ */
+export interface ContentModelCoreApiMap {
     /**
-     * Create a EditorContext object used by ContentModel API
+     * Set HTML content to this editor. All existing content will be replaced. A ContentChanged event will be triggered
+     * if triggerContentChangedEvent is set to true
      * @param core The ContentModelEditorCore object
+     * @param innerCore The StandaloneEditorCore object
+     * @param content HTML content to set in
+     * @param triggerContentChangedEvent True to trigger a ContentChanged event. Default value is true
      */
-    createEditorContext: CreateEditorContext;
+    setContent: SetContent;
 
     /**
-     * Create Content Model from DOM tree in this editor
-     * @param core The ContentModelEditorCore object
-     * @param option The option to customize the behavior of DOM to Content Model conversion
+     * Insert a DOM node into editor content
+     * @param core The ContentModelEditorCore object. No op if null.
+     * @param innerCore The StandaloneEditorCore object
+     * @param option An insert option object to specify how to insert the node
      */
-    createContentModel: CreateContentModel;
+    insertNode: InsertNode;
 
     /**
-     * Get current DOM selection from editor
+     * Get current editor content as HTML string
      * @param core The ContentModelEditorCore object
+     * @param innerCore The StandaloneEditorCore object
+     * @param mode specify what kind of HTML content to retrieve
+     * @returns HTML string representing current editor content
      */
-    getDOMSelection: GetDOMSelection;
+    getContent: GetContent;
 
     /**
-     * Set content with content model
-     * @param core The ContentModelEditorCore object
-     * @param model The content model to set
-     * @param option Additional options to customize the behavior of Content Model to DOM conversion
+     * Get style based format state from current selection, including font name/size and colors
+     * @param core The ContentModelEditorCore objects
+     * @param innerCore The StandaloneEditorCore object
+     * @param node The node to get style from
      */
-    setContentModel: SetContentModel;
+    getStyleBasedFormatState: GetStyleBasedFormatState;
 
     /**
-     * Set current DOM selection from editor. This is the replacement of core API select
-     * @param core The ContentModelEditorCore object
-     * @param selection The selection to set
+     * Ensure user will type into a container element rather than into the editor content DIV directly
+     * @param core The EditorCore object.
+     * @param innerCore The StandaloneEditorCore object
+     * @param position The position that user is about to type to
+     * @param keyboardEvent Optional keyboard event object
+     * @param deprecated Deprecated parameter, not used
      */
-    setDOMSelection: SetDOMSelection;
+    ensureTypeInContainer: EnsureTypeInContainer;
 }
 
 /**
  * Represents the core data structure of a Content Model editor
  */
-export interface ContentModelEditorCore extends EditorCore, ContentModelPluginState {
+export interface ContentModelEditorCore extends ContentModelCorePluginState {
     /**
      * Core API map of this editor
      */
@@ -111,24 +147,23 @@ export interface ContentModelEditorCore extends EditorCore, ContentModelPluginSt
     readonly originalApi: ContentModelCoreApiMap;
 
     /**
-     * Default DOM to Content Model options
+     * Custom data of this editor
      */
-    defaultDomToModelOptions: (DomToModelOption | undefined)[];
+    readonly customData: Record<string, CustomData>;
 
     /**
-     * Default Content Model to DOM options
+     * Enabled experimental features
      */
-    defaultModelToDomOptions: (ModelToDomOption | undefined)[];
+    readonly experimentalFeatures: ExperimentalFeatures[];
 
     /**
-     * Default DOM to Content Model config, calculated from defaultDomToModelOptions,
-     * will be used for creating content model if there is no other customized options
+     * Dark model handler for the editor, used for variable-based solution.
+     * If keep it null, editor will still use original dataset-based dark mode solution.
      */
-    defaultDomToModelConfig: DomToModelSettings;
+    readonly darkColorHandler: DarkColorHandler;
 
     /**
-     * Default Content Model to DOM config, calculated from defaultModelToDomOptions,
-     * will be used for setting content model if there is no other customized options
+     * @deprecated Use zoomScale instead
      */
-    defaultModelToDomConfig: ModelToDomSettings;
+    readonly sizeTransformer: SizeTransformer;
 }
