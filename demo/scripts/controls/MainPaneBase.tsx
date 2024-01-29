@@ -41,6 +41,8 @@ export default abstract class MainPaneBase extends React.Component<{}, MainPaneB
     protected updateContentPlugin: UpdateContentPlugin;
     protected snapshotPlugin: SnapshotPlugin;
     protected content: string = '';
+    // '<div><span style="color: red;">Milton Dyer</span></div> <span style="color: red;">Leah​</span></div>​';
+
     protected themeMatch = window.matchMedia?.('(prefers-color-scheme: dark)');
 
     static getInstance() {
@@ -68,6 +70,8 @@ export default abstract class MainPaneBase extends React.Component<{}, MainPaneB
 
     abstract getTheme(isDark: boolean): PartialTheme;
 
+    abstract renderMentionPicker(): JSX.Element;
+
     render() {
         const styles = this.getStyles();
 
@@ -77,6 +81,7 @@ export default abstract class MainPaneBase extends React.Component<{}, MainPaneB
                 theme={this.getTheme(this.state.isDarkMode)}
                 className={styles.mainPane}>
                 {this.renderTitleBar()}
+                {this.renderMentionPicker()}
                 {!this.state.popoutWindow && this.renderRibbon(false /*isPopout*/)}
                 <div className={styles.body + ' ' + (this.state.isDarkMode ? 'dark' : '')}>
                     {this.state.popoutWindow ? this.renderPopout() : this.renderMainPane()}
@@ -175,6 +180,8 @@ export default abstract class MainPaneBase extends React.Component<{}, MainPaneB
 
         this.updateContentPlugin.forceUpdate();
 
+        console.log('MainPane content: ', this.content);
+
         return (
             <div className={styles.editorContainer} id="EditorContainer">
                 <div style={editorStyles}>
@@ -253,6 +260,7 @@ export default abstract class MainPaneBase extends React.Component<{}, MainPaneB
     };
 
     private onUpdate = (content: string) => {
+        console.log('Leah Xia content: ', this.content);
         this.content = content;
     };
 
@@ -277,3 +285,4 @@ export default abstract class MainPaneBase extends React.Component<{}, MainPaneB
         });
     };
 }
+

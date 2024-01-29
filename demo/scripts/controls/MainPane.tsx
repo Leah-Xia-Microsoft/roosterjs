@@ -29,6 +29,7 @@ import {
     getButtons,
     AllButtonKeys,
 } from 'roosterjs-react';
+import { DefaultButton } from '@fluentui/react/lib/Button';
 
 const styles = require('./MainPane.scss');
 type RibbonStringKeys =
@@ -146,6 +147,27 @@ class MainPane extends MainPaneBase {
         return <TitleBar className={styles.noGrow} isContentModelPane={false} />;
     }
 
+    renderMentionPicker() {
+        return (
+            <DefaultButton
+                style={{ width: '100px', height: '100px' }}
+                onClick={() => {
+                    // alert('Leah Xia');
+                    // const node = this.editor?.getDocument().createElement('msft-mention');
+                    // // node.innerText = 'Leah Xia';
+                    // node.textContent = 'Leah Xia';
+                    // node.setAttribute('id', 'leah-xia');
+                    // // const attribute = this.editor?.getDocument().createAttribute('style');
+                    // // attribute.value = stringify({ color: 'red' });
+                    // // node.attributes.setNamedItem(attribute);
+                    // // node.id = 'leah-xia';
+                    // this.insertElementIntoEditor(node);
+                }}>
+                Leah Xia
+            </DefaultButton>
+        );
+    }
+
     renderRibbon(isPopout: boolean) {
         return (
             <Ribbon
@@ -218,3 +240,4 @@ class MainPane extends MainPaneBase {
 export function mount(parent: HTMLElement) {
     ReactDOM.render(<MainPane />, parent);
 }
+

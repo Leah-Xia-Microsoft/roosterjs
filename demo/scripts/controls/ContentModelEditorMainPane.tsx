@@ -16,7 +16,13 @@ import TitleBar from './titleBar/TitleBar';
 import { arrayPush } from 'roosterjs-editor-dom';
 import { ContentModelEditor } from 'roosterjs-content-model-editor';
 import { ContentModelRibbonPlugin } from './ribbonButtons/contentModel/ContentModelRibbonPlugin';
-import { EditorOptions, EditorPlugin } from 'roosterjs-editor-types';
+import {
+    EditorOptions,
+    EditorPlugin,
+    IEditor,
+    PickerDataProvider,
+    PickerPluginOptions,
+} from 'roosterjs-editor-types';
 import { PartialTheme } from '@fluentui/react/lib/Theme';
 import {
     createRibbonPlugin,
@@ -24,6 +30,9 @@ import {
     createPasteOptionPlugin,
     createEmojiPlugin,
 } from 'roosterjs-react';
+import { PickerPlugin } from 'roosterjs-editor-plugins';
+import { DefaultButton } from '@fluentui/react/lib/Button';
+// import { stringify } from 'querystring';
 
 const styles = require('./ContentModelEditorMainPane.scss');
 
@@ -91,9 +100,63 @@ class ContentModelEditorMainPane extends MainPaneBase {
     private contentModelRibbonPlugin: RibbonPlugin;
     private pasteOptionPlugin: EditorPlugin;
     private emojiPlugin: EditorPlugin;
+    private mentionPlugin: PickerPlugin;
     private toggleablePlugins: EditorPlugin[] | null = null;
     private formatPainterPlugin: ContentModelFormatPainterPlugin;
     private sampleEntityPlugin: SampleEntityPlugin;
+    private insertElementIntoEditor?: (elementToInsert: HTMLElement) => void;
+    private editor: IEditor | null = null;
+
+    getPickerDataProvider = (): PickerDataProvider => {
+        return {
+            onInitalize: (
+                insertNodeCallback: (nodeToInsert: HTMLElement) => void,
+                setIsSuggestingCallback: (isSuggesting: boolean) => void,
+                editor: IEditor
+            ): void => {
+                this.insertElementIntoEditor = insertNodeCallback;
+                // this.setIsSuggestingShowPicker = setIsSuggestingCallback;
+                this.editor = editor;
+            },
+            onDispose: (): void => {},
+
+            onIsSuggestingChanged: (isSuggesting: boolean): void => {
+                // this.setIsSuggestingShowPicker && this.setIsSuggestingShowPicker(isSuggesting);
+                console.log('onIsSuggestingChanged::: ', isSuggesting);
+                // const node = this.editor?.getDocument().createElement('span');
+                // node.innerText = 'Leah';
+                // this.insertElementIntoEditor(node);
+                // this.setUIUtilities({renderComponent:})
+            },
+
+            queryStringUpdated: (queryString: string, _isExactMatch: boolean): void => {
+                // this.debouncedQueryUpdate(queryString);
+                console.log('queryStringUpdated::: ', queryString);
+            },
+
+            setCursorPoint: (point: { x: number; y: number }): void => {
+                // this.setSuggestedTextCursorLocation = point;
+                console.log('setCursorPoint::: ', point);
+            },
+
+            onRemove: (_nodeRemoved: Node, _isBackwards: boolean): Node => {
+                alert(`${_nodeRemoved}, _isBackwards: ${_isBackwards}`);
+
+                return document.createTextNode('');
+            },
+            onContentChanged: (elementIds: string[]) => {
+                console.log('onContentChanged::: ', elementIds);
+            },
+        };
+    };
+
+    getPickerOption = (): PickerPluginOptions => {
+        return {
+            elementIdPrefix: 'msft-mention',
+            changeSource: 'AtMention',
+            triggerCharacter: '@',
+        };
+    };
 
     constructor(props: {}) {
         super(props);
@@ -108,6 +171,7 @@ class ContentModelEditorMainPane extends MainPaneBase {
         this.contentModelRibbonPlugin = new ContentModelRibbonPlugin();
         this.pasteOptionPlugin = createPasteOptionPlugin();
         this.emojiPlugin = createEmojiPlugin();
+        this.mentionPlugin = new PickerPlugin(this.getPickerDataProvider(), this.getPickerOption());
         this.formatPainterPlugin = new ContentModelFormatPainterPlugin();
         this.sampleEntityPlugin = new SampleEntityPlugin();
         this.state = {
@@ -119,6 +183,35 @@ class ContentModelEditorMainPane extends MainPaneBase {
             editorCreator: null,
             isRtl: false,
         };
+    }
+
+    renderMentionPicker() {
+        return (
+            <DefaultButton
+                style={{ width: '100px', height: '100px' }}
+                onClick={() => {
+                    // alert('Leah Xia');
+                    // const node = this.editor?.getDocument().createElement('span');
+                    // // node.innerText = 'Leah Xia';
+                    // node.textContent = 'Leah Xia';
+                    // node.setAttribute('id', 'leah-xia');
+                    // const attribute = this.editor?.getDocument().createAttribute('style');
+                    // attribute.value = stringify({ color: 'red' });
+                    // node.attributes.setNamedItem(attribute);
+                    // node.id = 'leah-xia';
+
+                    const anchorElement = document.createElement('span');
+                    const atMentionId = 'msft-mention' + 'suggestion.id';
+                    const targetName = 'Leah Xia';
+                    anchorElement.id = atMentionId;
+                    anchorElement.innerText = '@' + targetName;
+                    this.insertElementIntoEditor(anchorElement);
+                    // console.log('getContent', this.editor.getContent());
+                    console.log('getContent', this.editor.getFocusedPosition());
+                }}>
+                Leah Xia
+            </DefaultButton>
+        );
     }
 
     getStyles(): Record<string, string> {
@@ -165,6 +258,7 @@ class ContentModelEditorMainPane extends MainPaneBase {
             this.ContentModelPanePlugin.getInnerRibbonPlugin(),
             this.pasteOptionPlugin,
             this.emojiPlugin,
+            this.mentionPlugin,
             this.formatPainterPlugin,
             this.sampleEntityPlugin,
         ];
@@ -205,3 +299,4 @@ class ContentModelEditorMainPane extends MainPaneBase {
 export function mount(parent: HTMLElement) {
     ReactDOM.render(<ContentModelEditorMainPane />, parent);
 }
+
