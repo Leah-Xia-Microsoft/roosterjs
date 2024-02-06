@@ -22,7 +22,7 @@ class SelectionPlugin implements PluginWithState<SelectionPluginState> {
         this.state = {
             selection: null,
             selectionStyleNode: null,
-            imageSelectionBorderColor: options.imageSelectionBorderColor, // TODO: Move to Selection core plugin
+            imageSelectionBorderColor: options.imageSelectionBorderColor,
         };
     }
 
@@ -155,6 +155,7 @@ class SelectionPlugin implements PluginWithState<SelectionPluginState> {
             editor.setDOMSelection({
                 type: 'range',
                 range: range,
+                isReverted: false,
             });
         }
     }

@@ -7,6 +7,31 @@ class DOMHelperImpl implements DOMHelper {
     queryElements(selector: string): HTMLElement[] {
         return toArray(this.contentDiv.querySelectorAll(selector)) as HTMLElement[];
     }
+
+    isNodeInEditor(node: Node): boolean {
+        return this.contentDiv.contains(node);
+    }
+
+    calculateZoomScale(): number {
+        const originalWidth = this.contentDiv.getBoundingClientRect()?.width || 0;
+        const visualWidth = this.contentDiv.offsetWidth;
+
+        return visualWidth > 0 && originalWidth > 0
+            ? Math.round((originalWidth / visualWidth) * 100) / 100
+            : 1;
+    }
+
+    setDomAttribute(name: string, value: string | null) {
+        if (value === null) {
+            this.contentDiv.removeAttribute(name);
+        } else {
+            this.contentDiv.setAttribute(name, value);
+        }
+    }
+
+    getDomAttribute(name: string): string | null {
+        return this.contentDiv.getAttribute(name);
+    }
 }
 
 /**
